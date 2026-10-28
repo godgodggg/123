@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VPN — настройка обхода</title>
+<style>
+body{font-family:Arial,sans-serif;background:#101827;color:white;
+max-width:600px;margin:40px auto;padding:16px}
+h1{font-size:26px}
+p{color:#aab5c8}
+section{background:#1c293c;border-radius:12px;
+padding:18px;margin:14px 0}
+label{display:block;padding:9px;cursor:pointer}
+input{accent-color:#38a3ff}
+button{background:#2689ed;color:white;border:0;
+border-radius:9px;padding:12px 18px;cursor:pointer;margin:5px}
+textarea{width:100%;height:190px;box-sizing:border-box;
+background:#0d1420;color:#d5eaff;border:1px solid #42526a;
+border-radius:8px;padding:12px;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>Настройка VPN</h1>
+<p>Выберите сервисы, которые должны работать
+напрямую, без VPN.</p>
+<div id="services"></div>
+<button onclick="generate()">Сформировать список</button>
+<button onclick="selectAll()">Выбрать всё</button>
+<button onclick="clearAll()">Очистить</button>
+<textarea id="result" readonly
+placeholder="Здесь появится список доменов"></textarea>
+<button onclick="copyList()">Копировать</button>
+<button onclick="download()">Скачать TXT</button>
+
+<script>
+const groups = {
+"Банки": {
+"Сбер": ["sber.ru","sberbank.ru"],
+"Т-Банк": ["tbank.ru","tinkoff.ru"],
+"Альфа-Банк": ["alfabank.ru"],
+"ВТБ": ["vtb.ru"],
+"Другие банки": ["gpb.ru","psbank.ru","sovcombank.ru"]
+},
+"Маркетплейсы": {
+"Ozon": ["ozon.ru","ozon.com","ozonusercontent.com"],
+"Wildberries": ["wildberries.ru","wb.ru","wbstatic.net","wbbasket.ru"],
+"Авито": ["avito.ru","avito.st"],
+"DNS": ["dns-shop.ru"],
+"Ситилинк": ["citilink.ru"]
+},
+"Госуслуги": {
+"Госуслуги": ["gosuslugi.ru","gu-st.ru","goskey.ru"],
+"ФНС": ["nalog.ru","nalog.gov.ru"],
+"Мос.ру": ["mos.ru"]
+},
+"Приложения и сервисы": {
+"Яндекс": ["yandex.ru","ya.ru","yastatic.net"],
+"VK": ["vk.com","vk.ru","userapi.com"],
+"MAX": ["max.ru","oneme.ru"],
+"Mail.ru": ["mail.ru"],
+"2ГИС": ["2gis.ru","2gis.com"],
+"RuTube": ["rutube.ru"],
+"Кинопоиск": ["kinopoisk.ru"],
+"Самокат": ["samokat.ru"],
+"СДЭК": ["cdek.ru"],
+"Почта России": ["pochta.ru"]
+},
+"Связь": {
+"МТС": ["mts.ru"],
+"Билайн": ["beeline.ru"],
+"МегаФон": ["megafon.ru"],
+"T2": ["t2.ru","tele2.ru"],
+"Ростелеком": ["rt.ru","rostelecom.ru"]
+}
+};
+
+const root = document.getElementById("services");
+for (const [category,apps] of Object.entries(groups)) {
+  const section=document.createElement("section");
+  const heading=document.createElement("h3");
+  heading.textContent=category;
+  section.append(heading);
+
+  for(const [name,domains] of Object.entries(apps)){
+    const label=document.createElement("label");
+    const input=document.createElement("input");
+    input.type="checkbox";
+    input.className="service";
+    input.dataset.domains=JSON.stringify(domains);
+    label.append(input,document.createTextNode(" "+name));
+    section.append(label);
+  }
+  root.append(section);
+}
+
+function generate(){
+  const domains=new Set();
+  document.querySelectorAll(".service:checked")
+    .forEach(el=>{
+      JSON.parse(el.dataset.domains)
+        .forEach(d=>domains.add(d));
+    });
+  document.getElementById("result").value=
+    [...domains].map(d=>"domain:"+d).join("\n");
+}
+
+function selectAll(){
+  document.querySelectorAll(".service")
+    .forEach(el=>el.checked=true);
+  generate();
+}
+
+function clearAll(){
+  document.querySelectorAll(".service")
+    .forEach(el=>el.checked=false);
+  generate();
+}
+
+async function copyList(){
+  const text=document.getElementById("result").value;
+  if(!text)return;
+  try{
+    await navigator.clipboard.writeText(text);
+    alert("Скопировано!");
+  }catch{
+    alert("Не удалось скопировать автоматически");
+  }
+}
+
+function download(){
+  const text=document.getElementById("result").value;
+  if(!text)return;
+  const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="vpn-direct.txt";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+</script>
+</body>
+</html>
